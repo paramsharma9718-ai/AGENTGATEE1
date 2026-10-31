@@ -1,0 +1,28 @@
+CONFIDENTIAL — Employee Records
+=================================
+STRICTLY CONFIDENTIAL — Authorized Personnel Only
+
+Employee ID: EMP-DEMO-001
+Name: Example Employee
+Department: AI Security Research
+Date of Birth: 1990-01-01
+
+Identification:
+- PAN Number: [REDACTED]
+- SSN: [REDACTED]
+- Aadhaar: [REDACTED]
+
+Compensation Details:
+- Annual Salary: Rs. 0
+- Bank Account: [REDACTED]
+- IBAN: [REDACTED]
+
+Emergency Contact:
+- Emergency Contact: Example Contact
+  Phone: +1-202-555-0100
+  Email: contact@example.invalid
+
+Performance Rating: 0/5 (Example)
+
+This document contains personally identifiable information (PII)
+and financial data. Unauthorized access or distribution is prohibited.

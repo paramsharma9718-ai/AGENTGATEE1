@@ -1,0 +1,3 @@
+AGENTGATE Public Overview
+
+AGENTGATE is a security gateway that separates AI action proposals from trusted authorization.

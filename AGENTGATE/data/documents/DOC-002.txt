@@ -1,0 +1,3 @@
+AGENTGATE Internal Architecture Guidelines
+
+All tools must pass through the Execution Gateway. Module 01 controls policy and Module 02 enforces metadata.
