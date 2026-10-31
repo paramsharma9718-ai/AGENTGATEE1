@@ -4,8 +4,13 @@
 *College Team Project:* Param (Module 04), Nihal (Module 03), Dev (Module 02), Keshav (Module 01).
 
 ---
+🌐 Live Application
 
+Try AGENTGATE here:
+
+👉 https://agentgatee1-fyzibekak2bktry8swptja.streamlit.app/
 ## Architecture Overview
+---
 
 AGENTGATE separates AI-generated action proposals from trusted security authorization.
 
