@@ -1,255 +1,190 @@
 """Document Manager View for AGENTGATE.
 
 Module 04: Application, Database, Dashboard & Monitoring (Param)
+Secure document vault with automated DLP content scanning, sensitivity tagging, and gateway authorization.
 """
 
+import html as html_module
 import pandas as pd
 import streamlit as st
 
 from models.document_security import Classification
 from storage.document_service import default_document_service
-from views.theme import classification_badge, render_pro_reader
+from views.theme import (
+    classification_badge,
+    decision_badge,
+    empty_state,
+    kpi_card,
+    page_header,
+    section_header,
+    status_badge,
+)
+
+
+def _esc(value) -> str:
+    return html_module.escape(str(value))
 
 
 def render_documents(current_user: dict):
-    # Page Header
-    st.markdown(
-        """
-        <div class="ag-fade-in">
-            <div class="ag-section-header">📁 Document Manager & Reader</div>
-            <div class="ag-section-subtext">Secure document ingestion with automated Data Loss Prevention (DLP) scanning,
-            sensitivity classification, and an immersive document reading suite protected by ExecutionGateway.</div>
-            <div class="ag-section-header-bar"></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    # 1. Page Header
+    page_header(
+        icon="📁",
+        title="Document Vault & DLP Scanner",
+        subtitle="Secure document ingestion with automated Data Loss Prevention (DLP) pattern inspection, clearance classification, and cryptographic authorization boundaries.",
     )
-
-    tab_reader, tab_manage, tab_upload = st.tabs([
-        "📖 Document Reader",
-        "📋 Registered Documents Registry",
-        "📤 Upload & Inspect Document",
-    ])
 
     docs = default_document_service.list_documents()
 
-    # -------------------------------------------------------------
-    # TAB 1: PRO DOCUMENT READER
-    # -------------------------------------------------------------
-    with tab_reader:
-        if not docs:
-            st.info("No documents currently registered in the system. Use the Upload tab to add documents.")
-        else:
-            doc_dict = {d["document_id"]: d for d in docs}
-            doc_ids = list(doc_dict.keys())
+    # 2. Vault KPI Summary Cards
+    c1, c2, c3, c4 = st.columns(4)
+    total_docs = len(docs)
+    total_dlp = sum(d.get("dlp_findings_count", 0) for d in docs)
+    conf_docs = sum(1 for d in docs if str(d.get("classification")).upper() in ("CONFIDENTIAL", "RESTRICTED"))
+    pub_docs = sum(1 for d in docs if str(d.get("classification")).upper() == "PUBLIC")
 
-            # Determine currently selected document
-            stored_active = st.session_state.get("pro_reader_active_doc_id")
-            default_index = doc_ids.index(stored_active) if stored_active in doc_ids else 0
+    with c1:
+        st.markdown(kpi_card("📁", "Total Documents", total_docs, "purple", "Vault documents", delay=1), unsafe_allow_html=True)
+    with c2:
+        st.markdown(kpi_card("🌐", "Public Documents", pub_docs, "blue", "Accessible by all roles", delay=2), unsafe_allow_html=True)
+    with c3:
+        st.markdown(kpi_card("🔒", "High-Sensitivity", conf_docs, "amber", "Confidential / Restricted", delay=3), unsafe_allow_html=True)
+    with c4:
+        st.markdown(kpi_card("⚠️", "DLP Findings", total_dlp, "red" if total_dlp > 0 else "emerald", "Sensitive patterns flagged", delay=4), unsafe_allow_html=True)
 
-            col_sel, col_user = st.columns([3, 1])
-            with col_sel:
-                selected_doc_id = st.selectbox(
-                    "Select Document to Read:",
-                    options=doc_ids,
-                    index=default_index,
-                    format_func=lambda x: f"{x} — {doc_dict[x]['original_filename']} ({doc_dict[x]['classification'].upper()})",
-                    key="pro_reader_doc_selector",
-                )
-                st.session_state["pro_reader_active_doc_id"] = selected_doc_id
+    st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
-            with col_user:
-                st.markdown(
-                    f"""
-                    <div class="ag-card" style="padding:10px 14px; margin-top:24px; margin-bottom:0;">
-                        <span style="font-size:0.75rem; color:#94A3B8; text-transform:uppercase; font-weight:700;">Active Identity</span><br>
-                        <span style="font-size:0.95rem; font-weight:700; color:#60A5FA;">{current_user['user_id']}</span>
-                        <span style="font-size:0.75rem; color:#A78BFA; margin-left:6px;">({current_user['role']})</span>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-            selected_doc = doc_dict[selected_doc_id]
-
-            # Security clearance retrieval via ExecutionGateway
-            allowed, content_or_err, cls_val, decision = default_document_service.get_document_content(
-                document_id=selected_doc_id,
-                requesting_user_id=current_user["user_id"],
-            )
-
-            if allowed:
-                render_pro_reader(
-                    content=content_or_err,
-                    title=selected_doc["original_filename"],
-                    document_id=selected_doc["document_id"],
-                    classification=selected_doc["classification"],
-                    file_type=selected_doc.get("file_type", "txt"),
-                    redacted_content=selected_doc.get("redacted_content"),
-                    key_prefix=f"pro_read_{selected_doc_id}",
-                    default_height=560,
-                    clearance_note=f"GATEWAY CLEARED ({decision}) • FAIL-CLOSED ACTIVE",
-                )
-            else:
-                # Gateway Blocked Card
-                st.markdown(
-                    f"""
-                    <div class="ag-fade-in" style="margin-top:16px;">
-                        <div class="ag-card ag-card-glow-red" style="padding:28px 32px;">
-                            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
-                                <h3 style="margin:0; color:#EF4444;">⛔ Access Denied by ExecutionGateway (Module 01 Fail-Closed)</h3>
-                                <span class="ag-clearance-pill-blocked">🚫 RESTRICTED CLEARANCE</span>
-                            </div>
-                            <div style="margin-top:16px; padding:14px 18px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:12px;">
-                                <p style="margin:0 0 6px 0; color:#FCA5A5; font-size:1.02rem;"><b>Gateway Decision:</b> <code>{decision}</code></p>
-                                <p style="margin:0; color:#E2E8F0;"><b>Security Policy Reason:</b> {content_or_err}</p>
-                            </div>
-                            <p style="margin-top:16px; color:#CBD5E1; font-size:0.92rem; line-height:1.6;">
-                                Identity <b>{current_user['user_id']}</b> (Role: <span style="color:#A78BFA; font-weight:bold;">{current_user['role']}</span>) lacks the mandatory security clearance to access <b>{selected_doc['classification'].upper()}</b> document <code>{selected_doc_id}</code>.
-                                Under AGENTGATE's Zero-Trust fail-closed architecture, the document contents were never read from disk.
-                            </p>
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+    tab_manage, tab_upload = st.tabs(["📋 Document Registry & Actions", "📤 Upload & Scan Document"])
 
     # -------------------------------------------------------------
-    # TAB 2: REGISTERED DOCUMENTS REGISTRY
+    # TAB 1: REGISTERED DOCUMENTS & OPERATIONS
     # -------------------------------------------------------------
     with tab_manage:
-        st.markdown(
-            """
-            <div class="ag-fade-in">
-                <div class="ag-card" style="padding:14px 20px 10px 20px;">
-                    <h4 style="margin:0; color:#E2E8F0;">📋 Current Document Registry</h4>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        section_header("📋", "Registered Documents in Secure Vault")
 
         if not docs:
-            st.info("No documents currently registered.")
-        else:
-            table_rows = []
-            for d in docs:
-                table_rows.append({
-                    "Document ID": d["document_id"],
-                    "Filename": d["original_filename"],
-                    "Type": d["file_type"],
-                    "Size (KB)": round(d["file_size_bytes"] / 1024, 1),
-                    "Classification": d["classification"].upper(),
-                    "Uploaded By": d["uploaded_by"],
-                    "Date": d["upload_date"][:19].replace("T", " "),
-                    "DLP Findings": d["dlp_findings_count"],
-                })
+            empty_state("📁", "No Documents Found in Vault", "Use the 'Upload & Scan Document' tab to ingest and classify files.")
+            return
 
-            st.dataframe(pd.DataFrame(table_rows), width="stretch", hide_index=True)
+        table_rows = []
+        for d in docs:
+            table_rows.append({
+                "Document ID": d["document_id"],
+                "Filename": d["original_filename"],
+                "Type": d["file_type"].upper(),
+                "Size (KB)": round(d["file_size_bytes"] / 1024, 1),
+                "Classification": d["classification"].upper(),
+                "Uploaded By": d["uploaded_by"],
+                "Registered At": d["upload_date"][:19].replace("T", " "),
+                "DLP Findings": d["dlp_findings_count"],
+            })
 
-            st.markdown("---")
-            st.markdown(
-                """
-                <div class="ag-fade-in">
-                    <div class="ag-card ag-card-glow-blue" style="padding:14px 20px 10px 20px;">
-                        <h4 style="margin:0; color:#E2E8F0;">🔐 Document Actions (Authorized Operations)</h4>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+        st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
 
-            doc_ids = [d["document_id"] for d in docs]
-            sel_doc_id = st.selectbox("Select Document for Actions:", doc_ids, key="mgmt_sel_doc")
+        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+        section_header("🔐", "Authorized Document Operations")
 
-            c_open, c_dlp, c_del = st.columns(3)
+        doc_ids = [d["document_id"] for d in docs]
+        sel_doc_id = st.selectbox("Select Target Document for Operation:", doc_ids)
 
-            with c_open:
-                if st.button("📖 Read Document", width="stretch"):
-                    st.session_state["pro_reader_active_doc_id"] = sel_doc_id
-                    st.session_state["inline_read_doc_id"] = sel_doc_id
+        c_view, c_dlp, c_del = st.columns(3)
 
-            with c_dlp:
-                if st.button("🔍 View DLP Findings Report", width="stretch"):
-                    cur_doc = next((d for d in docs if d["document_id"] == sel_doc_id), None)
-                    if cur_doc and cur_doc.get("dlp_findings"):
-                        st.write(f"**DLP Findings for `{sel_doc_id}`:**")
-                        st.dataframe(pd.DataFrame(cur_doc["dlp_findings"]), width="stretch")
-                    else:
-                        st.info(f"Zero sensitive patterns detected in `{sel_doc_id}`.")
-
-            with c_del:
-                if st.button("🗑️ Delete Document (Admin Only)", width="stretch"):
-                    del_ok, del_msg = default_document_service.delete_document(
-                        document_id=sel_doc_id,
-                        requesting_user_id=current_user["user_id"],
-                        user_role=current_user["role"],
-                    )
-                    if del_ok:
-                        st.success(del_msg)
-                        st.rerun()
-                    else:
-                        st.error(f"⛔ {del_msg}")
-
-            # If user clicked "Read Document" from registry, render below full-width
-            if st.session_state.get("inline_read_doc_id") == sel_doc_id:
-                cur_doc = next((d for d in docs if d["document_id"] == sel_doc_id), None)
-                if cur_doc:
+        with c_view:
+            if st.button("📖 Read Content (Gateway Authorization)", use_container_width=True):
+                with st.spinner("Submitting READ_DOCUMENT to ExecutionGateway..."):
                     allowed, content_or_err, cls_val, decision = default_document_service.get_document_content(
                         document_id=sel_doc_id,
                         requesting_user_id=current_user["user_id"],
                     )
-                    if allowed:
-                        st.markdown("#### 📖 Full-Width Reader")
-                        render_pro_reader(
-                            content=content_or_err,
-                            title=cur_doc["original_filename"],
-                            document_id=cur_doc["document_id"],
-                            classification=cur_doc["classification"],
-                            file_type=cur_doc.get("file_type", "txt"),
-                            redacted_content=cur_doc.get("redacted_content"),
-                            key_prefix=f"inline_reader_{sel_doc_id}",
-                            default_height=520,
-                            clearance_note=f"GATEWAY CLEARED ({decision})",
-                        )
-                    else:
-                        st.error(f"⛔ {content_or_err}")
+
+                if allowed:
+                    st.markdown(
+                        f"""
+                        <div class="ag-card ag-card-glow-green" style="margin-top:10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <h4 style="color:#51FAAA; margin:0;">✓ Access Granted ({_esc(decision)})</h4>
+                                <span>{classification_badge(cls_val)}</span>
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                    st.text_area("Authorized Document Content:", content_or_err, height=200)
+                else:
+                    st.markdown(
+                        f"""
+                        <div class="ag-card ag-card-glow-red" style="margin-top:10px;">
+                            <h4 style="color:#FF6B6B; margin:0 0 6px 0;">⛔ Access Denied ({_esc(decision)})</h4>
+                            <p style="color:#FF8E8E; margin:0;">{_esc(content_or_err)}</p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+        with c_dlp:
+            if st.button("🔍 View DLP Findings Report", use_container_width=True):
+                cur_doc = next((d for d in docs if d["document_id"] == sel_doc_id), None)
+                if cur_doc and cur_doc.get("dlp_findings"):
+                    st.markdown(
+                        f"""
+                        <div class="ag-card ag-card-glow-amber" style="margin-top:10px;">
+                            <h4 style="color:#FFB347; margin:0 0 4px 0;">⚠️ Sensitive Data Findings for {_esc(sel_doc_id)}</h4>
+                            <p><b>{len(cur_doc['dlp_findings'])}</b> sensitive pattern(s) identified by the Module 02 DLP Engine.</p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                    st.dataframe(pd.DataFrame(cur_doc["dlp_findings"]), use_container_width=True)
+                else:
+                    st.markdown(
+                        f"""
+                        <div class="ag-card ag-card-glow-green" style="margin-top:10px;">
+                            <h4 style="color:#51FAAA; margin:0;">✓ Zero DLP Violations</h4>
+                            <p>No sensitive credentials, PII, or financial patterns detected in <code>{_esc(sel_doc_id)}</code>.</p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+        with c_del:
+            if st.button("🗑️ Delete Document (Admin Only)", use_container_width=True):
+                del_ok, del_msg = default_document_service.delete_document(
+                    document_id=sel_doc_id,
+                    requesting_user_id=current_user["user_id"],
+                    user_role=current_user["role"],
+                )
+                if del_ok:
+                    st.success(del_msg)
+                    st.rerun()
+                else:
+                    st.error(f"⛔ {del_msg}")
 
     # -------------------------------------------------------------
-    # TAB 3: UPLOAD & DLP SCAN
+    # TAB 2: UPLOAD & DLP SCAN
     # -------------------------------------------------------------
     with tab_upload:
+        section_header("📤", "Ingest New Document into Secure Vault")
         st.markdown(
-            """
-            <div class="ag-fade-in">
-                <div class="ag-card ag-card-glow-blue" style="padding:16px 20px; margin-bottom:16px;">
-                    <h4 style="margin:0 0 6px 0; color:#E2E8F0;">Upload Document (PDF, DOCX, TXT)</h4>
-                    <p style="color:#CBD5E1; margin:0; font-size:0.88rem;">Uploaded documents are stored in secure isolated storage and scanned via <strong style="color:#60A5FA;">Module 02 DLP Engine</strong> to automatically detect credentials, API keys, PII, and financial data.</p>
-                </div>
-            </div>
-            """,
+            "<p style='color:#A6ABC5; font-size:0.88rem;'>Files are stored in isolated vault storage and inspected by the <b>Module 02 DLP Engine</b> "
+            "using entropy calculation, regular expressions, and keyword heuristics for automated classification.</p>",
             unsafe_allow_html=True,
         )
 
-        col_f, col_meta = st.columns([2, 1])
+        col_f, col_meta = st.columns([3, 2])
 
         with col_f:
-            st.markdown(
-                '<div class="ag-drop-zone" style="margin-bottom:8px;"><span style="color:#CBD5E1; font-size:0.88rem; font-weight:500;">📎 Drop file below or browse</span></div>',
-                unsafe_allow_html=True,
-            )
-            uploaded_file = st.file_uploader("Select Document File:", type=["txt", "pdf", "docx"], label_visibility="collapsed")
+            uploaded_file = st.file_uploader("Select Document to Ingest:", type=["txt", "pdf", "docx"])
 
         with col_meta:
             doc_desc = st.text_input("Document Description:", placeholder="e.g. Q4 Financial projections")
             class_choice = st.selectbox(
-                "Classification Mode:",
+                "Classification Assignment:",
                 ["AUTO (Scan via Module 02 DLP)", "PUBLIC", "INTERNAL", "CONFIDENTIAL", "RESTRICTED"],
+                help="AUTO uses the DLP engine's sensitivity heuristic. Manual selection overrides subject to admin role.",
             )
 
-        if st.button("🔒 Ingest, Scan & Classify Document", width="stretch"):
+        if st.button("🔒 Ingest, Scan & Classify Document", use_container_width=True):
             if not uploaded_file:
-                st.warning("Please select a file to upload.")
+                st.warning("Please select a valid document file.")
                 return
 
             file_bytes = uploaded_file.read()
@@ -257,7 +192,7 @@ def render_documents(current_user: dict):
             if class_choice != "AUTO (Scan via Module 02 DLP)":
                 override_cls = Classification(class_choice.lower())
 
-            with st.spinner("Extracting content and running Module 02 DLP regex and keyword engine..."):
+            with st.spinner("Executing Module 02 DLP regex and keyword classification scan..."):
                 success, msg, res_dict = default_document_service.upload_document(
                     filename=uploaded_file.name,
                     file_bytes=file_bytes,
@@ -268,14 +203,15 @@ def render_documents(current_user: dict):
                 )
 
             if success:
-                st.success(msg)
                 st.markdown(
                     f"""
-                    <div class="ag-fade-in">
-                        <div class="ag-card ag-card-glow-green" style="padding:14px 18px;">
-                            <p style="margin:4px 0;"><b>Document ID:</b> <code>{res_dict['document_id']}</code></p>
-                            <p style="margin:4px 0;"><b>Assigned Classification:</b> {classification_badge(res_dict['classification'])}</p>
-                            <p style="margin:4px 0;"><b>Suggested by DLP:</b> {classification_badge(res_dict['suggested_classification'])}</p>
+                    <div class="ag-card ag-card-glow-green" style="margin-top:12px;">
+                        <h4 style="color:#51FAAA; margin:0 0 6px 0;">✓ Document Ingestion Successful</h4>
+                        <p style="color:#E2E8F0; margin-bottom:8px;">{_esc(msg)}</p>
+                        <div style="display:flex; gap:16px; font-size:0.85rem; color:#A6ABC5;">
+                            <span><b>Vault ID:</b> <code>{_esc(res_dict['document_id'])}</code></span>
+                            <span><b>Assigned Label:</b> {classification_badge(res_dict['classification'])}</span>
+                            <span><b>DLP Recommendation:</b> {classification_badge(res_dict['suggested_classification'])}</span>
                         </div>
                     </div>
                     """,
@@ -284,25 +220,10 @@ def render_documents(current_user: dict):
 
                 findings = res_dict.get("dlp_findings", [])
                 if findings:
-                    st.markdown(
-                        f"""
-                        <div class="ag-fade-in">
-                            <div class="ag-card ag-card-glow-amber" style="padding:14px 18px;">
-                                <h4 style="margin:0 0 8px 0; color:#FBBF24;">⚠️ {len(findings)} Sensitive Data Patterns Detected by DLP</h4>
-                            </div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+                    st.warning(f"⚠️ {len(findings)} Sensitive Data Pattern(s) Identified by DLP:")
                     findings_df = pd.DataFrame(findings)
-                    st.dataframe(findings_df[["category", "severity", "confidence", "line", "redacted"]], width="stretch")
-                    if res_dict.get("redacted_content"):
-                        with st.expander("🛡️ View DLP-Sanitized Redacted Text Preview"):
-                            st.code(res_dict["redacted_content"], language="text")
+                    st.dataframe(findings_df[["category", "severity", "confidence", "line", "redacted"]], use_container_width=True)
                 else:
-                    st.info("✅ No sensitive PII, financial, or credential patterns detected.")
-
-                st.session_state["pro_reader_active_doc_id"] = res_dict["document_id"]
-                st.info("💡 You can now switch to the **📖 Document Reader** tab to view your document with custom typography and themes!")
+                    st.info("✅ Clean Scan: No credentials, tokens, or PII detected.")
             else:
-                st.error(f"Upload failed: {msg}")
+                st.error(f"Ingestion failed: {msg}")

@@ -42,21 +42,10 @@ class AgentGateAI:
         self.workflow_manager = workflow_manager or default_workflow_manager
         self.llm = llm or default_llm_integration
 
-    def handle_request(
-        self,
-        user_id: str,
-        prompt: str,
-        api_key: Optional[str] = None,
-        model: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    def handle_request(self, user_id: str, prompt: str) -> Dict[str, Any]:
         """Process a user request and execute the proposed protected operations through the gateway."""
-        # 1. Propose structured action from natural language (via Nemotron or fallback)
-        proposal = self.llm.interpret_user_request(
-            user_id=user_id,
-            prompt=prompt,
-            api_key=api_key,
-            model=model,
-        )
+        # 1. Propose structured action from natural language
+        proposal = self.llm.interpret_user_request(user_id=user_id, prompt=prompt)
         if not proposal:
             return {
                 "status": "UNRECOGNIZED_REQUEST",

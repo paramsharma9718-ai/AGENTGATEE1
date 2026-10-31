@@ -30,7 +30,6 @@ from models.workflow import (
 )
 from security.approval import apply_approval
 from security.authorization import authorize_action
-from security.rate_limiter import RateLimiter, default_rate_limiter
 from storage.audit_logger import AuditLogger, default_audit_logger
 from storage.document_registry import DocumentRegistry, default_document_registry
 
@@ -42,11 +41,9 @@ class ExecutionGateway:
         self,
         audit_logger: Optional[AuditLogger] = None,
         document_registry: Optional[DocumentRegistry] = None,
-        rate_limiter: Optional[RateLimiter] = None,
     ):
         self.audit_logger = audit_logger or default_audit_logger
         self.document_registry = document_registry or default_document_registry
-        self.rate_limiter = rate_limiter or default_rate_limiter
 
     def _resolve_classification(self, proposal: ActionProposal) -> Optional[str]:
         """Resolve trusted resource classification.
@@ -67,23 +64,7 @@ class ExecutionGateway:
                 if meta:
                     return meta.classification.value.lower()
             except Exception:
-                pass
-
-            # Fallback to trusted documents_metadata in SQLite
-            try:
-                import sqlite3
-                from pathlib import Path
-                db_path = Path(__file__).resolve().parent.parent / "data" / "agentgate.db"
-                if db_path.exists():
-                    with sqlite3.connect(str(db_path), timeout=5.0) as conn:
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT classification FROM documents_metadata WHERE document_id = ?", (proposal.resource_id,))
-                        row = cursor.fetchone()
-                        if row and row[0]:
-                            return row[0].lower()
-            except Exception:
-                pass
-            return None
+                return None
 
         # For report delivery, check saved reports in audit/storage
         if proposal.operation in (Operation.SEND_REPORT, Operation.SAVE_REPORT):
@@ -112,32 +93,6 @@ class ExecutionGateway:
         request_id = f"REQ-{uuid.uuid4().hex[:8].upper()}"
 
         try:
-            # 0. Denial-of-Wallet Defense: Rate Limiter & Agent Infinite Loop Breaker
-            rate_ok, rate_msg, reason_code = self.rate_limiter.check_proposal(proposal)
-            if not rate_ok:
-                explanation = f"Security Gateway: {rate_msg}"
-                self.audit_logger.log_event(
-                    event_id=f"AUD-{uuid.uuid4().hex[:8].upper()}",
-                    user_id=proposal.user_id,
-                    operation=proposal.operation,
-                    resource_id=proposal.resource_id,
-                    recipient_id=proposal.recipient_id,
-                    decision=AuthorizationDecision.BLOCK,
-                    risk_level=RiskLevel.HIGH if reason_code == "RATE_LIMIT_EXCEEDED" else RiskLevel.CRITICAL,
-                    explanation=explanation,
-                    status=ExecutionStatus.BLOCKED,
-                    details={"denial_of_wallet": reason_code},
-                )
-                return ExecutionResult(
-                    proposal_id=proposal.proposal_id,
-                    status=ExecutionStatus.BLOCKED,
-                    operation=proposal.operation,
-                    resource_id=proposal.resource_id,
-                    user_id=proposal.user_id,
-                    recipient_id=proposal.recipient_id,
-                    error_message=explanation,
-                )
-
             # 1. Resolve trusted resource classification
             classification_str = self._resolve_classification(proposal)
             if not classification_str:

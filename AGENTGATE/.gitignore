@@ -10,3 +10,10 @@ test_files/4_restricted_server_credentials.txt
 .env
 .env.*
 !.env.example
+*.db
+*.db-*
+*.zip
+__pycache__/
+.pytest_cache/
+.env
+.env.*

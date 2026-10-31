@@ -1,4 +1,4 @@
 RESTRICTED Security Keys and Admin Credentials
 
-Root Master Key: [REDACTED DEMO VALUE]
+Root Master Key: ak-sec-9994827104857201-prod-key
 Strict access only for System Administrator.

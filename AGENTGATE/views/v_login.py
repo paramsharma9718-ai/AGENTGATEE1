@@ -1,26 +1,51 @@
 """User Login, Registration and Identity Management View for AGENTGATE.
 
 Module 04: Application, Database, Dashboard & Monitoring (Param)
+PBKDF2-HMAC-SHA256 authenticated identity management and role switching for policy evaluation.
 """
 
+import html as html_module
 import pandas as pd
 import streamlit as st
 
 from auth.user_manager import default_user_manager
+from views.theme import (
+    decision_badge,
+    empty_state,
+    kpi_card,
+    page_header,
+    section_header,
+    status_badge,
+)
+
+
+def _esc(value) -> str:
+    return html_module.escape(str(value))
 
 
 def render_login(current_user: dict):
-    # Page Header with animated entrance
-    st.markdown(
-        """
-        <div class="ag-fade-in">
-            <div class="ag-section-header">👤 User Identity & Access Management</div>
-            <div class="ag-section-subtext">Cryptographic credential authentication, Role-Based Access Control (RBAC), and simulated identity switching for gateway policy verification.</div>
-            <div class="ag-section-header-bar"></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    # 1. Page Header
+    page_header(
+        icon="👤",
+        title="User Identity & Access Management",
+        subtitle="Role-based credential management, PBKDF2 authentication, and multi-role evaluation switcher for AGENTGATE authorization policies.",
     )
+
+    users = default_user_manager.list_users()
+
+    # 2. Identity Summary KPIs
+    role = current_user["role"]
+    role_color = "emerald" if role == "ADMINISTRATOR" else "blue" if role == "AUTHORIZED_USER" else "amber"
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown(kpi_card("👤", "Active Identity", current_user["username"], "purple", f"ID: {current_user['user_id']}", delay=1), unsafe_allow_html=True)
+    with c2:
+        st.markdown(kpi_card("🛡️", "Clearance Tier", role, role_color, "Current RBAC role", delay=2), unsafe_allow_html=True)
+    with c3:
+        st.markdown(kpi_card("👥", "Total Users", len(users), "blue", "Registered in SQLite", delay=3), unsafe_allow_html=True)
+
+    st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
     tab_current, tab_login, tab_register, tab_directory = st.tabs([
         "🔑 Active Identity & Role Switcher",
@@ -29,54 +54,40 @@ def render_login(current_user: dict):
         "👥 User Directory",
     ])
 
+    # -------------------------------------------------------------
+    # TAB 1: ACTIVE IDENTITY & ROLE SWITCHER
+    # -------------------------------------------------------------
     with tab_current:
-        role_color = "#10B981" if current_user["role"] == "ADMINISTRATOR" else "#3B82F6" if current_user["role"] == "AUTHORIZED_USER" else "#EF4444"
-        glow_class = "ag-card-glow-green" if current_user["role"] == "ADMINISTRATOR" else "ag-card-glow-blue" if current_user["role"] == "AUTHORIZED_USER" else "ag-card-glow-red"
+        section_header("🔑", "Active Authenticated Session")
 
         st.markdown(
             f"""
-            <div class="ag-fade-in">
-                <div class="ag-card {glow_class}" style="margin-bottom: 24px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                        <div>
-                            <span style="font-size:0.75rem; color:#CBD5E1; text-transform:uppercase; letter-spacing:0.05em; font-weight:700;">Active Gateway Session</span>
-                            <h3 style="margin:2px 0 0 0; color:#F8FAFC;">{current_user['full_name']}</h3>
-                        </div>
-                        <span class="ag-badge" style="background:rgba(59,130,246,0.15); color:{role_color}; border:1px solid {role_color}; font-size:0.85rem; padding:6px 14px;">
-                            ● {current_user['role']}
-                        </span>
-                    </div>
-                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
-                        <div>
-                            <span style="color:#CBD5E1; font-size:0.8rem; font-weight:600;">USER ID:</span>
-                            <code style="color:#60A5FA; font-family:'JetBrains Mono',monospace;">{current_user['user_id']}</code>
-                        </div>
-                        <div>
-                            <span style="color:#CBD5E1; font-size:0.8rem; font-weight:600;">USERNAME:</span>
-                            <code style="color:#E2E8F0; font-family:'JetBrains Mono',monospace;">{current_user['username']}</code>
-                        </div>
-                    </div>
+            <div class="ag-card ag-card-glow-blue" style="margin-bottom:18px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 style="color:#60A5FA; margin:0;">
+                        Active User: <code>{_esc(current_user['username'])}</code>
+                    </h3>
+                    <span class="ag-badge ag-badge-public">ID: {_esc(current_user['user_id'])}</span>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:0.9rem; color:#A6ABC5;">
+                    <div><b>Full Name:</b> {_esc(current_user['full_name'])}</div>
+                    <div><b>Clearance Role:</b> <span style="color:#60A5FA; font-weight:700;">{_esc(current_user['role'])}</span></div>
                 </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
+        section_header("⚡", "Quick Role Switcher (For Evaluation & Boundary Testing)")
         st.markdown(
-            """
-            <div class="ag-fade-in" style="margin-bottom: 12px;">
-                <h4 style="color:#60A5FA; margin:0 0 4px 0;">⚡ Fast Identity Simulation (For Security Evaluation)</h4>
-                <p style="color:#CBD5E1; font-size:0.85rem; margin:0;">Instantly switch identities to verify authorization boundaries and fail-closed gates without logging out.</p>
-            </div>
-            """,
+            "<p style='color:#A6ABC5; font-size:0.85rem;'>Quickly assume different identities to test how the fail-closed gateway restricts unauthorized reads and deliveries:</p>",
             unsafe_allow_html=True,
         )
 
-        users = default_user_manager.list_users()
         u_map = {u["username"]: u for u in users}
 
-        c1, c2 = st.columns([2, 1])
-        with c1:
+        c_sel, c_btn = st.columns([3, 1])
+        with c_sel:
             sel_user = st.selectbox(
                 "Select Identity to Simulate:",
                 options=list(u_map.keys()),
@@ -84,56 +95,64 @@ def render_login(current_user: dict):
                 format_func=lambda x: f"{x} — {u_map[x]['full_name']} ({u_map[x]['role']})",
             )
 
-        with c2:
-            st.write("")
-            st.write("")
-            if st.button("Switch Identity", width="stretch"):
+        with c_btn:
+            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+            if st.button("Switch Identity", use_container_width=True):
                 st.session_state["user"] = u_map[sel_user]
-                st.success(f"Switched identity to {sel_user} ({u_map[sel_user]['role']})!")
+                st.success(f"✓ Switched identity to {sel_user} ({u_map[sel_user]['role']})!")
                 st.rerun()
 
+    # -------------------------------------------------------------
+    # TAB 2: SIGN IN
+    # -------------------------------------------------------------
     with tab_login:
+        section_header("🔓", "Authenticate with Credentials")
         st.markdown(
-            """
-            <div class="ag-fade-in" style="margin-bottom: 16px;">
-                <h4 style="color:#F8FAFC; margin:0 0 4px 0;">Sign In with Cryptographic Credentials</h4>
-                <p style="color:#CBD5E1; font-size:0.85rem; margin:0;">Passwords are salted and verified with PBKDF2-HMAC-SHA256.</p>
-            </div>
-            """,
+            "<p style='color:#A6ABC5; font-size:0.85rem;'>Passwords verified via PBKDF2-HMAC-SHA256 with 100,000 hashing rounds:</p>",
             unsafe_allow_html=True,
         )
 
-        login_u = st.text_input("Username:", key="login_u")
-        login_p = st.text_input("Password:", type="password", key="login_p")
+        col_l1, col_l2 = st.columns([1, 1])
+        with col_l1:
+            login_u = st.text_input("Username:", key="login_u", placeholder="e.g. admin or keshav")
+        with col_l2:
+            login_p = st.text_input("Password:", type="password", key="login_p", placeholder="••••••••")
 
-        if st.button("Sign In", width="stretch"):
+        if st.button("Sign In to Session", use_container_width=True):
             user_profile = default_user_manager.authenticate_user(login_u, login_p)
             if user_profile:
                 st.session_state["user"] = user_profile
-                st.success(f"Welcome back, {user_profile['full_name']}! Clearance: {user_profile['role']}")
+                st.success(f"✓ Welcome back, {user_profile['full_name']}! Clearance: {user_profile['role']}")
                 st.rerun()
             else:
                 st.error("Invalid username or password.")
 
+    # -------------------------------------------------------------
+    # TAB 3: REGISTER NEW USER
+    # -------------------------------------------------------------
     with tab_register:
-        st.markdown(
-            """
-            <div class="ag-fade-in" style="margin-bottom: 16px;">
-                <h4 style="color:#F8FAFC; margin:0 0 4px 0;">Register New Account</h4>
-                <p style="color:#CBD5E1; font-size:0.85rem; margin:0;">Create a new user profile with assigned security role.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        section_header("📝", "Register New User Account")
 
-        reg_u = st.text_input("New Username:", key="reg_u")
-        reg_p = st.text_input("Password (min 6 characters):", type="password", key="reg_p")
-        reg_p_confirm = st.text_input("Confirm Password:", type="password", key="reg_p_c")
-        reg_role = st.selectbox("Assign Role:", ["AUTHORIZED_USER", "RESTRICTED_USER", "ADMINISTRATOR"])
-        reg_fname = st.text_input("Full Name:", key="reg_fn")
+        c_r1, c_r2 = st.columns(2)
+        with c_r1:
+            reg_u = st.text_input("New Username:", key="reg_u", placeholder="e.g. auditor_01")
+            reg_p = st.text_input("Password (min 6 characters):", type="password", key="reg_p", placeholder="••••••••")
+            reg_p_confirm = st.text_input("Confirm Password:", type="password", key="reg_p_c", placeholder="••••••••")
 
-        if st.button("Create Account", width="stretch"):
-            if reg_p != reg_p_confirm:
+        with c_r2:
+            reg_fname = st.text_input("Full Name:", key="reg_fn", placeholder="e.g. Jane Doe")
+            reg_role = st.selectbox(
+                "Assign Role Clearance:",
+                ["AUTHORIZED_USER", "RESTRICTED_USER", "ADMINISTRATOR"],
+                help="ADMINISTRATOR: Full access + Approval authority. AUTHORIZED_USER: Standard docs. RESTRICTED_USER: Public docs only.",
+            )
+
+        if st.button("Create Authenticated Identity", use_container_width=True):
+            if not reg_u.strip() or not reg_fname.strip():
+                st.warning("Please fill in all required fields.")
+            elif len(reg_p) < 6:
+                st.warning("Password must be at least 6 characters.")
+            elif reg_p != reg_p_confirm:
                 st.error("Passwords do not match.")
             else:
                 ok, msg, new_u = default_user_manager.register_user(
@@ -143,21 +162,27 @@ def render_login(current_user: dict):
                     full_name=reg_fname,
                 )
                 if ok:
-                    st.success(f"{msg} User ID: `{new_u['user_id']}`")
+                    st.success(f"✓ {msg} User ID: `{new_u['user_id']}`")
                     st.session_state["user"] = new_u
                     st.rerun()
                 else:
-                    st.error(msg)
+                    st.error(f"Registration failed: {msg}")
 
+    # -------------------------------------------------------------
+    # TAB 4: USER DIRECTORY
+    # -------------------------------------------------------------
     with tab_directory:
-        st.markdown(
-            """
-            <div class="ag-fade-in" style="margin-bottom: 16px;">
-                <h4 style="color:#F8FAFC; margin:0 0 4px 0;">Registered Users in Secure Directory</h4>
-                <p style="color:#CBD5E1; font-size:0.85rem; margin:0;">Authorized accounts stored in SQLite with hashed credentials.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        section_header("👥", "Registered Users in System Directory")
         all_u = default_user_manager.list_users()
-        st.dataframe(pd.DataFrame(all_u), width="stretch", hide_index=True)
+
+        u_rows = []
+        for u in all_u:
+            u_rows.append({
+                "User ID": u["user_id"],
+                "Username": u["username"],
+                "Full Name": u["full_name"],
+                "Clearance Role": u["role"],
+                "Registered At": u["created_at"][:19].replace("T", " "),
+            })
+
+        st.dataframe(pd.DataFrame(u_rows), use_container_width=True, hide_index=True)

@@ -1,56 +1,73 @@
 """Policy Monitoring View for AGENTGATE.
 
 Module 04: Application, Database, Dashboard & Monitoring (Param)
+Role-Based Access Control (RBAC), classification clearance boundaries, and approval policy inspector.
 """
 
+import html as html_module
 import json
 from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+from views.theme import (
+    classification_badge,
+    empty_state,
+    kpi_card,
+    page_header,
+    section_header,
+)
+
+
+def _esc(value) -> str:
+    return html_module.escape(str(value))
+
 
 def render_policies(current_user: dict):
-    # Page Header with animated entrance
-    st.markdown(
-        """
-        <div class="ag-fade-in">
-            <div class="ag-section-header">📜 Policy Monitoring & Configuration</div>
-            <div class="ag-section-subtext">Inspection of trusted Role-Based Access Control (RBAC), classification clearance boundaries, and human approval rules.</div>
-            <div class="ag-section-header-bar"></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    # 1. Page Header
+    page_header(
+        icon="📜",
+        title="Security Policy Matrix",
+        subtitle="Inspection of trusted Role-Based Access Control (RBAC), multi-tier data clearance boundaries, and mandatory human approval rules configured in Module 01.",
     )
 
     policy_path = Path(__file__).resolve().parent.parent / "config" / "security_policies.json"
     with open(policy_path, "r", encoding="utf-8") as f:
         policy_data = json.load(f)
 
+    roles_dict = policy_data.get("roles", {})
+    class_dict = policy_data.get("resource_classifications", {})
+    appr_rules = policy_data.get("approval_required", {})
+    recips = policy_data.get("recipient_authorizations", {}).get("authorized_recipients", [])
+
+    # 2. Policy Summary KPIs
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.markdown(kpi_card("👥", "Configured Roles", len(roles_dict), "purple", "RBAC security roles", delay=1), unsafe_allow_html=True)
+    with c2:
+        st.markdown(kpi_card("🏷️", "Clearance Tiers", len(class_dict), "blue", "Sensitivity levels", delay=2), unsafe_allow_html=True)
+    with c3:
+        st.markdown(kpi_card("⚠️", "Approval Triggers", len(appr_rules), "amber", "High-risk actions", delay=3), unsafe_allow_html=True)
+    with c4:
+        st.markdown(kpi_card("📬", "Authorized Recipients", len(recips), "emerald", "Cleared destinations", delay=4), unsafe_allow_html=True)
+
+    st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
+
     tab_matrix, tab_class, tab_approvals, tab_raw = st.tabs([
         "👥 Roles & Operations Matrix",
         "🏷️ Classification Clearance",
         "⚠️ Approval Rules & Recipients",
-        "📄 Raw JSON Policy",
+        "📄 Raw Policy JSON",
     ])
 
     with tab_matrix:
+        section_header("👥", "Role-Based Access Control (RBAC) Permissions")
         st.markdown(
-            """
-            <div class="ag-fade-in">
-                <div class="ag-card ag-card-glow-blue" style="margin-bottom: 20px;">
-                    <h4 style="margin: 0 0 6px 0; color: #60A5FA;">Role-Based Access Control (RBAC) Permissions</h4>
-                    <p style="color: #CBD5E1; margin: 0; font-size: 0.9rem;">
-                        Specifies the precise action proposals each role is permitted to submit to the security gateway.
-                    </p>
-                </div>
-            </div>
-            """,
+            "<p style='color:#A6ABC5; font-size:0.85rem;'>Defines the baseline tool operations each role is authorized to propose via the AI agent or Execution Gateway:</p>",
             unsafe_allow_html=True,
         )
 
-        roles_dict = policy_data.get("roles", {})
         all_ops = ["READ_DOCUMENT", "SAVE_REPORT", "SEND_REPORT", "ACCESS_RESOURCE", "MODIFY_CLASSIFICATION"]
-
         rows = []
         for role, conf in roles_dict.items():
             row = {"Role": role}
@@ -59,81 +76,60 @@ def render_policies(current_user: dict):
                 row[op] = "✅ ALLOWED" if op in allowed else "❌ BLOCKED"
             rows.append(row)
 
-        st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
     with tab_class:
+        section_header("🏷️", "Resource Classification Clearance Boundaries")
         st.markdown(
-            """
-            <div class="ag-fade-in">
-                <div class="ag-card ag-card-glow-blue" style="margin-bottom: 20px;">
-                    <h4 style="margin: 0 0 6px 0; color: #60A5FA;">Resource Classification Clearance Boundaries</h4>
-                    <p style="color: #CBD5E1; margin: 0; font-size: 0.9rem;">
-                        Multi-level security classification tiers. Users without corresponding clearance are blocked fail-closed.
-                    </p>
-                </div>
-            </div>
-            """,
+            "<p style='color:#A6ABC5; font-size:0.85rem;'>Strict Bell-LaPadula / Biba clearance rules governing which roles may read or modify data at each sensitivity tier:</p>",
             unsafe_allow_html=True,
         )
 
-        class_dict = policy_data.get("resource_classifications", {})
         c_rows = []
         for cls_name, conf in class_dict.items():
             c_rows.append({
-                "Classification Tier": cls_name.upper(),
-                "Authorized Roles": ", ".join(conf.get("allowed_roles", [])),
+                "Sensitivity Tier": cls_name.upper(),
+                "Authorized Clearance Roles": ", ".join(conf.get("allowed_roles", [])),
+                "Enforcement Rule": "Fail-Closed Gateway Block if role not in set",
             })
-        st.dataframe(pd.DataFrame(c_rows), width="stretch", hide_index=True)
+        st.dataframe(pd.DataFrame(c_rows), use_container_width=True, hide_index=True)
 
     with tab_approvals:
+        section_header("⚠️", "Mandatory Human Approval Thresholds")
         st.markdown(
-            """
-            <div class="ag-fade-in">
-                <div class="ag-card ag-card-glow-amber" style="margin-bottom: 20px;">
-                    <h4 style="margin: 0 0 6px 0; color: #F59E0B;">⚠️ Mandatory Human Approval Rules</h4>
-                    <p style="color: #CBD5E1; margin: 0; font-size: 0.9rem;">
-                        High-risk operations that trigger <code>REQUIRE_APPROVAL</code> state regardless of user clearance, requiring explicit administrator sign-off.
-                    </p>
-                </div>
-            </div>
-            """,
+            "<p style='color:#A6ABC5; font-size:0.85rem;'>High-risk operations that automatically trigger <code>REQUIRE_APPROVAL</code> state, quarantining the execution until an Administrator signs off:</p>",
             unsafe_allow_html=True,
         )
 
-        appr_rules = policy_data.get("approval_required", {})
         a_rows = []
         for op, tiers in appr_rules.items():
             a_rows.append({
                 "Operation": op,
                 "Requires Human Approval On": ", ".join([t.upper() for t in tiers]),
                 "Default Risk Level": "CRITICAL",
+                "Resolution Authority": "ADMINISTRATOR only",
             })
-        st.dataframe(pd.DataFrame(a_rows), width="stretch", hide_index=True)
+        st.dataframe(pd.DataFrame(a_rows), use_container_width=True, hide_index=True)
 
+        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+        section_header("📬", "Authorized External Report Recipients")
         st.markdown(
-            """
-            <div class="ag-fade-in" style="margin-top: 24px;">
-                <h4 style="color: #60A5FA; margin-bottom: 8px;">Authorized External Report Recipients</h4>
-                <p style="color: #CBD5E1; font-size: 0.85rem; margin-bottom: 12px;">Identities vetted to receive external reports through the gateway:</p>
-            </div>
-            """,
+            "<p style='color:#A6ABC5; font-size:0.85rem;'>Only identities in this whitelist are permitted destinations for report dispatch operations:</p>",
             unsafe_allow_html=True,
         )
 
-        recips = policy_data.get("recipient_authorizations", {}).get("authorized_recipients", [])
-        recip_html = "".join([f'<span class="ag-badge ag-badge-public" style="margin-right: 8px; margin-bottom: 8px;">👤 {r}</span>' for r in recips])
-        st.markdown(f'<div class="ag-fade-in" style="display:flex; flex-wrap:wrap; gap:8px;">{recip_html}</div>', unsafe_allow_html=True)
+        recip_chips = "".join([
+            f'<div style="background:rgba(81,250,170,0.08); border:1px solid rgba(81,250,170,0.25); border-radius:8px; padding:8px 14px; color:#51FAAA; font-weight:600; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px; margin:4px;">'
+            f'<span>👤</span> <code>{_esc(r)}</code>'
+            f'</div>'
+            for r in recips
+        ])
+        st.markdown(f"<div>{recip_chips}</div>", unsafe_allow_html=True)
 
     with tab_raw:
+        section_header("📄", "Live Configuration Artifact")
         st.markdown(
-            """
-            <div class="ag-fade-in">
-                <div class="ag-card" style="margin-bottom: 16px;">
-                    <h4 style="margin: 0 0 4px 0; color: #F8FAFC;">Live Configuration File (<code>security_policies.json</code>)</h4>
-                    <p style="color: #CBD5E1; font-size: 0.85rem; margin: 0;">Authoritative policy document loaded at gateway initialization.</p>
-                </div>
-            </div>
-            """,
+            "<p style='color:#777D9B; font-size:0.82rem;'>Source of truth: <code>config/security_policies.json</code></p>",
             unsafe_allow_html=True,
         )
         st.json(policy_data)

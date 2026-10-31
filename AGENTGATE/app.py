@@ -4,6 +4,7 @@ Main Application Entrypoint (Module 04: Application, Database, Dashboard & Monit
 Developed by Param for Team AGENTGATE (Nihal, Dev, Param, Keshav).
 """
 
+import html as html_module
 import sys
 from pathlib import Path
 
@@ -26,6 +27,10 @@ from views.v_login import render_login
 from views.v_policies import render_policies
 from views.v_playground import render_playground
 from views.v_workflows import render_workflows
+
+
+def _esc(value) -> str:
+    return html_module.escape(str(value))
 
 
 def main():
@@ -59,39 +64,94 @@ def main():
     # SIDEBAR NAVIGATION
     # -----------------------------------------------------------------
     with st.sidebar:
-        # ── Logo & Brand ──
+        # Branding
         st.markdown(
-            '<div class="ag-sidebar-brand">'
-            '<div class="ag-sidebar-logo">🛡️ AGENTGATE</div>'
-            '<div class="ag-sidebar-subtext">AI Security Gateway & Information Control</div>'
-            '<div class="ag-gateway-badge">'
-            '<span class="ag-gateway-dot"></span>'
-            '<span class="ag-gateway-text">FAIL-CLOSED GATEWAY ACTIVE</span>'
-            '</div>'
-            '</div>',
+            """
+            <div style="text-align:center; padding: 10px 0 8px 0; animation: ag-fade-in 0.5s ease-out both;">
+                <div style="
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 52px; height: 52px;
+                    background: linear-gradient(135deg, rgba(139,124,255,0.15) 0%, rgba(81,250,170,0.1) 100%);
+                    border: 1px solid rgba(139,124,255,0.25);
+                    border-radius: 14px;
+                    font-size: 1.6rem;
+                    margin-bottom: 10px;
+                ">🛡️</div>
+                <h1 style="
+                    background: linear-gradient(135deg, #C4BFFF 0%, #51FAAA 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                    font-size: 1.6rem;
+                    font-weight: 800;
+                    letter-spacing: -0.03em;
+                    margin: 0 0 2px 0;
+                    line-height: 1.2;
+                ">AGENTGATE</h1>
+                <p style="color: #777D9B; font-size: 0.76rem; margin: 0 0 10px 0; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500;">
+                    AI Security Gateway
+                </p>
+                <div style="
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 4px 12px;
+                    background: rgba(81,250,170,0.06);
+                    border: 1px solid rgba(81,250,170,0.2);
+                    border-radius: 8px;
+                    font-size: 0.68rem;
+                    font-weight: 600;
+                    color: #51FAAA;
+                    letter-spacing: 0.04em;
+                ">
+                    <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#51FAAA; box-shadow: 0 0 6px rgba(81,250,170,0.5);"></span>
+                    GATEWAY ACTIVE
+                </div>
+            </div>
+            """,
             unsafe_allow_html=True,
         )
 
-        # ── Gradient Divider ──
-        st.markdown('<div class="ag-sidebar-divider"></div>', unsafe_allow_html=True)
+        st.markdown("---")
 
-        # ── Active User Profile Card ──
-        role_color = "#10B981" if current_user["role"] == "ADMINISTRATOR" else "#3B82F6" if current_user["role"] == "AUTHORIZED_USER" else "#EF4444"
-        role_bg = "rgba(16,185,129,0.1)" if current_user["role"] == "ADMINISTRATOR" else "rgba(59,130,246,0.1)" if current_user["role"] == "AUTHORIZED_USER" else "rgba(239,68,68,0.1)"
-        role_border = "rgba(16,185,129,0.3)" if current_user["role"] == "ADMINISTRATOR" else "rgba(59,130,246,0.3)" if current_user["role"] == "AUTHORIZED_USER" else "rgba(239,68,68,0.3)"
+        # Active User Profile Card
+        role = current_user["role"]
+        if role == "ADMINISTRATOR":
+            role_color = "#51FAAA"
+            role_dot = "ag-status-dot-green"
+        elif role == "AUTHORIZED_USER":
+            role_color = "#60A5FA"
+            role_dot = "ag-status-dot-green"
+        else:
+            role_color = "#FFB347"
+            role_dot = "ag-status-dot-amber"
 
         st.markdown(
-            f'<div class="ag-user-card">'
-            f'<div class="ag-user-label">AUTHENTICATED IDENTITY</div>'
-            f'<div class="ag-user-name">{current_user["full_name"]}</div>'
-            f'<div style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; background:{role_bg}; border:1px solid {role_border}; border-radius:999px; color:{role_color}; font-size:0.68rem; font-weight:700; letter-spacing:0.04em; font-family:\'Inter\',sans-serif;">{current_user["role"]}</div>'
-            f'<div class="ag-user-id">ID: {current_user["user_id"]}</div>'
-            f'</div>',
+            f"""
+            <div style="
+                background: linear-gradient(135deg, rgba(25,27,50,0.8) 0%, rgba(17,20,38,0.6) 100%);
+                border: 1px solid rgba(139,124,255,0.1);
+                border-radius: 12px;
+                padding: 14px 16px;
+                margin-bottom: 12px;
+                animation: ag-fade-in-up 0.4s ease-out both;
+            ">
+                <div style="font-size:0.68rem; color:#777D9B; text-transform:uppercase; letter-spacing:0.08em; font-weight:600; margin-bottom:6px;">
+                    Authenticated Identity
+                </div>
+                <div style="font-weight:700; color:#F5F6FF; font-size:0.92rem; margin-bottom:3px;">
+                    {_esc(current_user['full_name'])}
+                </div>
+                <div style="display:flex; align-items:center; gap:6px; font-size:0.78rem; color:{role_color}; font-weight:600;">
+                    <span class="ag-status-dot {role_dot}" style="animation:none;"></span>
+                    {_esc(role)} · {_esc(current_user['user_id'])}
+                </div>
+            </div>
+            """,
             unsafe_allow_html=True,
         )
-
-        # ── Navigation Divider ──
-        st.markdown('<div class="ag-sidebar-divider" style="margin:4px 0 12px 0;"></div>', unsafe_allow_html=True)
 
         # Check pending approvals count for badge
         pending_count = default_approval_service.count_pending()
@@ -99,46 +159,42 @@ def main():
 
         # Navigation Menu
         nav_options = [
-            "🛡️ Security Overview Dashboard",
-            "🤖 Agent Playground",
-            "📁 Document Manager",
+            "📊 Security Overview",
+            "🤖 AI Playground",
+            "📁 Documents",
             "🎯 Attack Simulator",
             appr_label,
-            "🔄 Workflow Manager",
-            "📜 Policy Monitoring",
-            "🔍 Tamper-Evident Audit Explorer",
-            "👤 Identity & Access (Auth)",
+            "🔄 Workflows",
+            "📜 Security Policies",
+            "🔍 Audit Explorer",
+            "👤 Identity & Access",
         ]
 
         selection = st.radio("Navigation:", nav_options, label_visibility="collapsed")
 
-        # ── Bottom Divider ──
-        st.markdown('<div class="ag-sidebar-divider" style="margin:16px 0 12px 0;"></div>', unsafe_allow_html=True)
-
-        # ── Team Credits — Glass Footer ──
+        st.markdown("---")
         st.markdown(
-            '<div class="ag-team-card">'
-            '<div style="font-size:0.68rem; color:#93C5FD; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:8px; font-family:\'Inter\',sans-serif;">TEAM AGENTGATE</div>'
-            '<div style="font-size:0.75rem; color:#E2E8F0; line-height:1.7; font-family:\'Inter\',sans-serif;">'
-            '<span style="color:#60A5FA; font-weight:600;">Param</span> — Module 04 (App & DB)<br/>'
-            '<span style="color:#60A5FA; font-weight:600;">Nihal</span> — Module 03 (Gateway & Agent)<br/>'
-            '<span style="color:#60A5FA; font-weight:600;">Dev & Keshav</span> — Modules 01 & 02'
-            '</div>'
-            '<div style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(99,102,241,0.25); font-size:0.65rem; color:#CBD5E1; font-style:italic; font-family:\'Inter\',sans-serif;">Module 04: Active & Integrated</div>'
-            '</div>',
+            """
+            <div style="font-size:0.7rem; color:#555A75; line-height:1.5; padding: 0 4px;">
+                <div style="font-weight:600; color:#777D9B; margin-bottom:4px;">College Team</div>
+                <span style="color:#616083;">Param</span> — Module 04 · App & DB<br/>
+                <span style="color:#616083;">Nihal</span> — Module 03 · Gateway<br/>
+                <span style="color:#616083;">Dev & Keshav</span> — Modules 01 & 02
+            </div>
+            """,
             unsafe_allow_html=True,
         )
 
     # -----------------------------------------------------------------
     # PAGE ROUTING
     # -----------------------------------------------------------------
-    if "Security Overview Dashboard" in selection:
+    if "Security Overview" in selection:
         render_dashboard(current_user)
 
-    elif "Agent Playground" in selection:
+    elif "AI Playground" in selection:
         render_playground(current_user)
 
-    elif "Document Manager" in selection:
+    elif "Documents" in selection:
         render_documents(current_user)
 
     elif "Attack Simulator" in selection:
@@ -147,10 +203,10 @@ def main():
     elif "Approval Center" in selection:
         render_approvals(current_user)
 
-    elif "Workflow Manager" in selection:
+    elif "Workflows" in selection:
         render_workflows(current_user)
 
-    elif "Policy Monitoring" in selection:
+    elif "Security Policies" in selection:
         render_policies(current_user)
 
     elif "Audit Explorer" in selection:

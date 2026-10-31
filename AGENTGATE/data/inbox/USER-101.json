@@ -21,52 +21,17 @@
     "sender": "USER-101"
   },
   {
-    "message_id": "MSG-72E95A56",
+    "message_id": "MSG-4C934774",
     "report_id": "WF-REP-01",
     "title": "Public Summary",
     "classification": "PUBLIC",
     "sender": "USER-101"
   },
   {
-    "message_id": "MSG-C3B71123",
+    "message_id": "MSG-44CE0369",
     "report_id": "WF-REP-01",
     "title": "Public Summary",
     "classification": "PUBLIC",
     "sender": "USER-101"
-  },
-  {
-    "message_id": "MSG-0312D5D2",
-    "report_id": "WF-REP-1658",
-    "title": "Automated Pipeline Summary",
-    "classification": "PUBLIC",
-    "sender": "USER-001"
-  },
-  {
-    "message_id": "MSG-7B0F8ED0",
-    "report_id": "WF-REP-1700",
-    "title": "Automated Pipeline Summary",
-    "classification": "PUBLIC",
-    "sender": "USER-001"
-  },
-  {
-    "message_id": "MSG-2CB42740",
-    "report_id": "WF-SUS-1712",
-    "title": "Suspended Pipeline Report",
-    "classification": "PUBLIC",
-    "sender": "USER-001"
-  },
-  {
-    "message_id": "MSG-75839E75",
-    "report_id": "WF-SUS-1711",
-    "title": "Suspended Pipeline Report",
-    "classification": "PUBLIC",
-    "sender": "USER-001"
-  },
-  {
-    "message_id": "MSG-C459D1D7",
-    "report_id": "WF-SUS-1710",
-    "title": "Suspended Pipeline Report",
-    "classification": "PUBLIC",
-    "sender": "USER-001"
   }
 ]

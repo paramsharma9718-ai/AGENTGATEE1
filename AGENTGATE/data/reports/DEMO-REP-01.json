@@ -9,7 +9,7 @@
     "DOC-003"
   ],
   "provenance": {
-    "record_id": "PROV-2d38068e72994ef0a1b29fff9f06ca8d",
+    "record_id": "PROV-e85fd785aac74b0588c636b826e140fe",
     "report_id": "DEMO-REP-01",
     "sources": [
       {
@@ -23,7 +23,7 @@
     ],
     "derived_classification": "CONFIDENTIAL",
     "transformation_type": "SUMMARIZATION",
-    "created_at": "2026-10-30T16:41:04.124216Z",
+    "created_at": "2026-10-30T17:24:36.726979Z",
     "parent_child_links": [
       {
         "parent_id": "DOC-001",
@@ -40,14 +40,12 @@
     "document_id": "DEMO-REP-01",
     "classification": "CONFIDENTIAL",
     "content_id": null,
-    "created_at": "2026-10-30T16:41:04.124216Z",
+    "created_at": "2026-10-30T17:24:36.726979Z",
     "label_origin": "INHERITED",
     "provenance_refs": [
-      "PROV-2d38068e72994ef0a1b29fff9f06ca8d"
+      "PROV-e85fd785aac74b0588c636b826e140fe"
     ],
     "declassification_authorization_id": null,
     "metadata": {}
-  },
-  "is_sanitized": false,
-  "dlp_findings_count": 0
+  }
 }

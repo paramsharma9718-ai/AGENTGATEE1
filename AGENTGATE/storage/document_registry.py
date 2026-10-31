@@ -40,70 +40,6 @@ class DocumentRegistry:
         self.storage_dir.mkdir(parents=True, exist_ok=True)
         self._metadata_registry: Dict[str, DocumentSecurityMetadata] = {}
         self._seed_default_documents()
-        self._hydrate_from_db()
-
-    def _hydrate_from_db(self) -> None:
-        """Hydrate any previously registered/uploaded documents from SQLite metadata table."""
-        db_path = self.storage_dir.parent / "agentgate.db"
-        if not db_path.exists():
-            return
-        try:
-            import sqlite3
-            with sqlite3.connect(str(db_path), timeout=5.0) as conn:
-                conn.row_factory = sqlite3.Row
-                cursor = conn.cursor()
-                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='documents_metadata'")
-                if not cursor.fetchone():
-                    return
-                cursor.execute("SELECT document_id, classification, upload_date FROM documents_metadata")
-                rows = cursor.fetchall()
-                for row in rows:
-                    doc_id = row["document_id"]
-                    if doc_id not in self._metadata_registry:
-                        try:
-                            cls_enum = Classification(row["classification"].lower())
-                        except Exception:
-                            cls_enum = Classification.PUBLIC
-                        self._metadata_registry[doc_id] = DocumentSecurityMetadata(
-                            document_id=doc_id,
-                            classification=cls_enum,
-                            label_origin=LabelOrigin.ASSIGNED,
-                            created_at=row["upload_date"] or utc_now(),
-                        )
-        except Exception:
-            pass
-
-    def _load_from_db(self, document_id: str) -> Optional[DocumentSecurityMetadata]:
-        """Load single document metadata from SQLite if missing from in-memory cache."""
-        db_path = self.storage_dir.parent / "agentgate.db"
-        if not db_path.exists():
-            return None
-        try:
-            import sqlite3
-            with sqlite3.connect(str(db_path), timeout=5.0) as conn:
-                conn.row_factory = sqlite3.Row
-                cursor = conn.cursor()
-                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='documents_metadata'")
-                if not cursor.fetchone():
-                    return None
-                cursor.execute("SELECT document_id, classification, upload_date FROM documents_metadata WHERE document_id = ?", (document_id,))
-                row = cursor.fetchone()
-                if row:
-                    try:
-                        cls_enum = Classification(row["classification"].lower())
-                    except Exception:
-                        cls_enum = Classification.PUBLIC
-                    meta = DocumentSecurityMetadata(
-                        document_id=row["document_id"],
-                        classification=cls_enum,
-                        label_origin=LabelOrigin.ASSIGNED,
-                        created_at=row["upload_date"] or utc_now(),
-                    )
-                    self._metadata_registry[document_id] = meta
-                    return meta
-        except Exception:
-            pass
-        return None
 
     def _sanitize_doc_id(self, document_id: str) -> str:
         """Validate document ID format and prevent path traversal."""
@@ -139,7 +75,7 @@ class DocumentRegistry:
             (
                 "DOC-004",
                 Classification.RESTRICTED,
-                "RESTRICTED Security Keys and Admin Credentials\n\nRoot Master Key: [REDACTED DEMO VALUE]\nStrict access only for System Administrator.",
+                "RESTRICTED Security Keys and Admin Credentials\n\nRoot Master Key: ak-sec-9994827104857201-prod-key\nStrict access only for System Administrator.",
             ),
         ]
 
@@ -181,33 +117,16 @@ class DocumentRegistry:
     def get_document_metadata(self, document_id: str) -> Optional[DocumentSecurityMetadata]:
         """Look up trusted security metadata for a document."""
         clean_id = self._sanitize_doc_id(document_id)
-        if clean_id in self._metadata_registry:
-            return self._metadata_registry[clean_id]
-        return self._load_from_db(clean_id)
+        return self._metadata_registry.get(clean_id)
 
     def read_document_content(self, document_id: str) -> Tuple[str, DocumentSecurityMetadata]:
         """Read content directly from safe storage."""
         clean_id = self._sanitize_doc_id(document_id)
-        meta = self.get_document_metadata(clean_id)
+        meta = self._metadata_registry.get(clean_id)
         if not meta:
             raise DocumentNotFoundError(f"Document '{clean_id}' is not registered.")
 
         doc_file = self.storage_dir / f"{clean_id}.txt"
-        if not doc_file.exists():
-            # Check SQLite stored_path
-            db_path = self.storage_dir.parent / "agentgate.db"
-            if db_path.exists():
-                try:
-                    import sqlite3
-                    with sqlite3.connect(str(db_path), timeout=5.0) as conn:
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT stored_path FROM documents_metadata WHERE document_id = ?", (clean_id,))
-                        row = cursor.fetchone()
-                        if row and row[0] and Path(row[0]).exists():
-                            doc_file = Path(row[0])
-                except Exception:
-                    pass
-
         if not doc_file.exists():
             raise DocumentNotFoundError(f"Document content for '{clean_id}' not found on disk.")
 

@@ -1,74 +1,108 @@
 """Workflow Manager View for AGENTGATE.
 
 Module 04: Application, Database, Dashboard & Monitoring (Param)
+Persistent multi-step AI agent pipelines backed by SQLite with stateful gateway authorization.
 """
 
+import html as html_module
 import json
-import sqlite3
 from pathlib import Path
+import sqlite3
 import pandas as pd
 import streamlit as st
 
 from agent.action_proposer import ActionProposer
 from agent.workflow_manager import default_workflow_manager
 from storage.audit_logger import default_audit_logger
-from views.theme import decision_badge
+from views.theme import (
+    decision_badge,
+    empty_state,
+    kpi_card,
+    page_header,
+    section_header,
+    status_badge,
+)
+
+
+def _esc(value) -> str:
+    return html_module.escape(str(value))
 
 
 def render_workflows(current_user: dict):
-    # Page Header with animated entrance
-    st.markdown(
-        """
-        <div class="ag-fade-in">
-            <div class="ag-section-header">🔄 Multi-Step Workflow Manager</div>
-            <div class="ag-section-subtext">Persistent multi-step AI Agent execution pipelines backed by SQLite with checkpointing and atomic policy re-validation.</div>
-            <div class="ag-section-header-bar"></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    # 1. Page Header
+    page_header(
+        icon="🔄",
+        title="Multi-Step Workflow Manager",
+        subtitle="Construct, persist, and orchestrate resilient multi-step AI agent execution pipelines backed by SQLite with stateful gateway authorization re-evaluated at every step.",
     )
 
-    tab_create, tab_manage = st.tabs(["⚡ Create & Run Pipeline", "📋 Persisted Workflows"])
+    db_path = Path(__file__).resolve().parent.parent / "data" / "agentgate.db"
+    with sqlite3.connect(db_path) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("SELECT * FROM workflows ORDER BY updated_at DESC").fetchall()
 
+    total_wf = len(rows)
+    completed_wf = sum(1 for r in rows if r["status"] == "COMPLETED")
+    suspended_wf = sum(1 for r in rows if r["status"] == "SUSPENDED")
+
+    # 2. Pipeline KPIs
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown(kpi_card("🔄", "Total Pipelines", total_wf, "purple", "Persisted in SQLite", delay=1), unsafe_allow_html=True)
+    with c2:
+        st.markdown(kpi_card("✓", "Completed", completed_wf, "emerald", "Successfully executed", delay=2), unsafe_allow_html=True)
+    with c3:
+        st.markdown(kpi_card("⏸️", "Suspended / Held", suspended_wf, "amber", "Awaiting resumption", delay=3), unsafe_allow_html=True)
+
+    st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+
+    tab_create, tab_manage = st.tabs(["⚡ Pipeline Designer & Execution", "📋 Persisted Pipelines Ledger"])
+
+    # -------------------------------------------------------------
+    # TAB 1: PIPELINE DESIGNER
+    # -------------------------------------------------------------
     with tab_create:
+        section_header("⚡", "Multi-Step Autonomous Tool Pipeline")
         st.markdown(
-            """
-            <div class="ag-fade-in">
-                <div class="ag-card ag-card-glow-blue" style="margin-bottom: 20px;">
-                    <h4 style="margin: 0 0 8px 0; color: #60A5FA;">🚀 Multi-Step Agent Execution Pipeline</h4>
-                    <p style="color: #CBD5E1; margin: 0; font-size: 0.9rem;">
-                        This test pipeline chains 3 sequential operations through the <strong>ExecutionGateway</strong>.
-                        Every step must satisfy policy validation independently. If suspended mid-pipeline, state is checkpointed in SQLite.
-                    </p>
-                </div>
-            </div>
-            """,
+            "<p style='color:#A6ABC5; font-size:0.88rem;'>Compose and execute chained operations across protected tools. "
+            "The Execution Gateway inspects permissions independently before every individual step:</p>",
             unsafe_allow_html=True,
         )
 
-        # Visual pipeline flow cards
+        # Visual Pipeline Architecture
         st.markdown(
             """
-            <div class="ag-fade-in" style="display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 12px; align-items: center; margin-bottom: 24px;">
-                <div class="ag-card" style="padding: 16px; margin: 0; border-top: 3px solid #3B82F6;">
-                    <div style="font-size: 0.75rem; color: #60A5FA; font-weight: 700; text-transform: uppercase;">Step 01 &bull; Read</div>
-                    <div style="font-size: 1.05rem; font-weight: 700; color: #F8FAFC; margin: 4px 0;">DOC-001</div>
-                    <div style="font-size: 0.8rem; color: #CBD5E1;">Target: PUBLIC document</div>
-                    <span class="ag-badge ag-badge-public" style="margin-top: 8px;">PUBLIC</span>
+            <div style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 18px 24px;
+                background: linear-gradient(135deg, rgba(25,27,50,0.85) 0%, rgba(17,20,38,0.7) 100%);
+                border: 1px solid rgba(139,124,255,0.15);
+                border-radius: 14px;
+                margin-bottom: 20px;
+                overflow-x: auto;
+            ">
+                <div style="flex:1; text-align:center; padding:10px; background:rgba(96,165,250,0.06); border:1px solid rgba(96,165,250,0.2); border-radius:10px;">
+                    <div style="font-size:1.3rem; margin-bottom:4px;">📖</div>
+                    <div style="font-size:0.75rem; color:#60A5FA; font-weight:700;">STEP 1: INGESTION</div>
+                    <div style="font-size:0.85rem; color:#F5F6FF; font-weight:600;">Read DOC-001</div>
+                    <div style="font-size:0.7rem; color:#777D9B;">Clearance: PUBLIC</div>
                 </div>
-                <div class="ag-pipeline-arrow">➔</div>
-                <div class="ag-card" style="padding: 16px; margin: 0; border-top: 3px solid #8B5CF6;">
-                    <div style="font-size: 0.75rem; color: #A78BFA; font-weight: 700; text-transform: uppercase;">Step 02 &bull; Generate</div>
-                    <div style="font-size: 1.05rem; font-weight: 700; color: #F8FAFC; margin: 4px 0;">WF-REP-AUTO</div>
-                    <div style="font-size: 0.8rem; color: #CBD5E1;">Derived analytics report</div>
-                    <span class="ag-badge ag-badge-internal" style="margin-top: 8px;">SAVE_REPORT</span>
+                <div style="color:#8B7CFF; font-size:1.4rem; font-weight:bold;">→</div>
+                <div style="flex:1; text-align:center; padding:10px; background:rgba(139,124,255,0.06); border:1px solid rgba(139,124,255,0.2); border-radius:10px;">
+                    <div style="font-size:1.3rem; margin-bottom:4px;">📊</div>
+                    <div style="font-size:0.75rem; color:#A78BFA; font-weight:700;">STEP 2: SYNTHESIS</div>
+                    <div style="font-size:0.85rem; color:#F5F6FF; font-weight:600;">Save Derived Report</div>
+                    <div style="font-size:0.7rem; color:#777D9B;">Label Inheritance Applied</div>
                 </div>
-                <div class="ag-pipeline-arrow">➔</div>
-                <div class="ag-card" style="padding: 16px; margin: 0; border-top: 3px solid #10B981;">
-                    <div style="font-size: 0.75rem; color: #34D399; font-weight: 700; text-transform: uppercase;">Step 03 &bull; Deliver</div>
-                    <div style="font-size: 1.05rem; font-weight: 700; color: #F8FAFC; margin: 4px 0;">USER-101</div>
-                    <div style="font-size: 0.8rem; color: #CBD5E1;">Recipient: Cleared User</div>
-                    <span class="ag-badge ag-badge-allow" style="margin-top: 8px;">SEND_REPORT</span>
+                <div style="color:#8B7CFF; font-size:1.4rem; font-weight:bold;">→</div>
+                <div style="flex:1; text-align:center; padding:10px; background:rgba(81,250,170,0.06); border:1px solid rgba(81,250,170,0.2); border-radius:10px;">
+                    <div style="font-size:1.3rem; margin-bottom:4px;">📬</div>
+                    <div style="font-size:0.75rem; color:#51FAAA; font-weight:700;">STEP 3: DISPATCH</div>
+                    <div style="font-size:0.85rem; color:#F5F6FF; font-weight:600;">Deliver to Recipient</div>
+                    <div style="font-size:0.7rem; color:#777D9B;">Whitelist Policy Check</div>
                 </div>
             </div>
             """,
@@ -78,8 +112,8 @@ def render_workflows(current_user: dict):
         col_exec, col_sus = st.columns(2)
 
         with col_exec:
-            if st.button("🚀 Create & Execute Pipeline Now", width="stretch"):
-                with st.spinner("Executing pipeline through ExecutionGateway..."):
+            if st.button("🚀 Create & Execute Pipeline Now", use_container_width=True):
+                with st.spinner("Submitting multi-step pipeline through ExecutionGateway..."):
                     p1 = ActionProposer.propose_read(current_user["user_id"], "DOC-001")
                     p2 = ActionProposer.propose_save_report(
                         current_user["user_id"],
@@ -99,14 +133,12 @@ def render_workflows(current_user: dict):
 
                 st.markdown(
                     f"""
-                    <div class="ag-fade-in" style="margin-top: 16px;">
-                        <div class="ag-card ag-card-glow-green">
-                            <h4 style="color:#10B981; margin:0 0 8px 0;">✅ Pipeline Successfully Executed</h4>
-                            <p style="margin: 0; color: #E2E8F0;">
-                                <strong>Workflow ID:</strong> <code>{res_wf.workflow_id}</code> &nbsp;|&nbsp;
-                                <strong>Status:</strong> <span class="ag-badge ag-badge-allow">{res_wf.status.value}</span> &nbsp;|&nbsp;
-                                <strong>Completed Steps:</strong> {res_wf.current_step_index} of {len(res_wf.steps)}
-                            </p>
+                    <div class="ag-card ag-card-glow-green" style="margin-top:14px;">
+                        <h4 style="color:#51FAAA; margin:0 0 6px 0;">✓ Pipeline Completed Successfully</h4>
+                        <div style="font-size:0.85rem; color:#A6ABC5;">
+                            <b>Pipeline ID:</b> <code>{_esc(res_wf.workflow_id)}</code> &nbsp;|&nbsp;
+                            <b>Status:</b> <span style="color:#51FAAA; font-weight:bold;">{_esc(res_wf.status.value)}</span> &nbsp;|&nbsp;
+                            <b>Steps Completed:</b> {res_wf.current_step_index} of {len(res_wf.steps)}
                         </div>
                     </div>
                     """,
@@ -115,7 +147,7 @@ def render_workflows(current_user: dict):
                 st.rerun()
 
         with col_sus:
-            if st.button("⏸️ Create & Suspend (Test Checkpoint & Resume)", width="stretch"):
+            if st.button("⏸️ Create & Suspend (Simulate Failure / Restart)", use_container_width=True):
                 p1 = ActionProposer.propose_read(current_user["user_id"], "DOC-001")
                 p2 = ActionProposer.propose_save_report(
                     current_user["user_id"],
@@ -135,13 +167,11 @@ def render_workflows(current_user: dict):
 
                 st.markdown(
                     f"""
-                    <div class="ag-fade-in" style="margin-top: 16px;">
-                        <div class="ag-card ag-card-glow-amber">
-                            <h4 style="color:#F59E0B; margin:0 0 8px 0;">⏸️ Workflow State Suspended</h4>
-                            <p style="margin: 0; color: #E2E8F0;">
-                                Workflow <code>{wf.workflow_id}</code> checkpointed at step 0 in SQLite.
-                                Switch to the <strong>Persisted Workflows</strong> tab to inspect and resume it.
-                            </p>
+                    <div class="ag-card ag-card-glow-amber" style="margin-top:14px;">
+                        <h4 style="color:#FFB347; margin:0 0 6px 0;">⏸️ Pipeline Suspended & Persisted</h4>
+                        <div style="font-size:0.85rem; color:#A6ABC5;">
+                            Pipeline <code>{_esc(wf.workflow_id)}</code> paused at step 0. State safely serialized in SQLite.
+                            Go to the 'Persisted Pipelines Ledger' tab to resume execution.
                         </div>
                     </div>
                     """,
@@ -149,77 +179,38 @@ def render_workflows(current_user: dict):
                 )
                 st.rerun()
 
+    # -------------------------------------------------------------
+    # TAB 2: PERSISTED WORKFLOWS LEDGER
+    # -------------------------------------------------------------
     with tab_manage:
-        st.markdown(
-            """
-            <div class="ag-fade-in" style="margin-bottom: 16px;">
-                <h4 style="color: #F8FAFC; margin: 0 0 4px 0;">Persisted SQLite Pipeline Registry</h4>
-                <p style="color: #CBD5E1; font-size: 0.85rem; margin: 0;">State checkpoints loaded directly from local SQLite database.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        db_path = Path(__file__).resolve().parent.parent / "data" / "agentgate.db"
-        with sqlite3.connect(db_path) as conn:
-            conn.row_factory = sqlite3.Row
-            rows = conn.execute("SELECT * FROM workflows ORDER BY updated_at DESC").fetchall()
+        section_header("📋", "Persisted SQLite Workflow Ledger")
 
         if not rows:
-            st.info("No workflows found in database.")
+            empty_state("🔄", "No Persisted Workflows", "Create and run a pipeline to view state history.")
             return
 
         w_table = []
         for r in rows:
             w_table.append({
-                "Workflow ID": r["workflow_id"],
+                "Pipeline ID": r["workflow_id"],
                 "Owner": r["user_id"],
                 "Status": r["status"],
-                "Current Step": r["current_step_index"],
-                "Updated At": r["updated_at"][:19].replace("T", " "),
+                "Completed Steps": r["current_step_index"],
+                "Last Updated": r["updated_at"][:19].replace("T", " "),
             })
+        st.dataframe(pd.DataFrame(w_table), use_container_width=True, hide_index=True)
 
-        st.dataframe(pd.DataFrame(w_table), width="stretch", hide_index=True)
-
-        st.markdown("---")
-
-        st.markdown(
-            """
-            <div class="ag-fade-in" style="margin-bottom: 12px;">
-                <h4 style="color: #60A5FA; margin: 0 0 4px 0;">⏯️ Resume Suspended Workflow</h4>
-                <p style="color: #CBD5E1; font-size: 0.85rem; margin: 0;">Re-evaluates security policies at each step upon resumption to guarantee no temporal policy bypass.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+        section_header("⏯️", "Resume Suspended Pipeline")
 
         wf_ids = [r["workflow_id"] for r in rows if r["status"] == "SUSPENDED"]
         if wf_ids:
-            sel_wf = st.selectbox("Select Suspended Workflow to Resume:", wf_ids)
-            if st.button(f"▶️ Resume Workflow '{sel_wf}'", width="stretch"):
+            sel_wf = st.selectbox("Select Suspended Pipeline to Resume:", wf_ids)
+            if st.button(f"▶️ Resume Execution for '{sel_wf}'", use_container_width=True):
                 with st.spinner("Resuming workflow and re-evaluating security policies at each step..."):
                     resumed = default_workflow_manager.resume_workflow(sel_wf)
 
-                st.markdown(
-                    f"""
-                    <div class="ag-fade-in">
-                        <div class="ag-card ag-card-glow-green">
-                            <h4 style="color:#10B981; margin:0 0 6px 0;">✅ Workflow Resumed & Completed</h4>
-                            <p style="margin: 0; color: #E2E8F0;">
-                                Workflow <code>{sel_wf}</code> transitioned to <span class="ag-badge ag-badge-allow">{resumed.status.value}</span>.
-                            </p>
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+                st.success(f"✓ Pipeline `{sel_wf}` resumed! Current Status: `{resumed.status.value}`")
                 st.rerun()
         else:
-            st.markdown(
-                """
-                <div class="ag-card" style="padding: 14px; text-align: center; color: #CBD5E1;">
-                    No workflows are currently in <code>SUSPENDED</code> state.
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            st.info("No workflows are currently in SUSPENDED state.")

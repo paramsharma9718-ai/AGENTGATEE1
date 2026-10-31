@@ -1,29 +1,100 @@
-INTERNAL USE ONLY
-==================
-AGENTGATE Project — Team Contact Directory
+SYNTAXIS 2026 • FLAGSHIP HACKATHON
+ARCHITHON
+TEAM CONSENT, UNDERTAKING & CODE OF CONDUCT FORM
+Host Venue: R.D. Engineering College (RDEC), Delhi-Meerut Expressway, Ghaziabad
+Form Ref No:
+ARC-2026 / ______
+Submit to: syntaxis@rdec.in
+MANDATORY INSTRUCTION: All participating team members (1 to 4 members) must complete, sign, and email this form in a single
+email attachment to syntaxis@rdec.in prior to reporting. Unsubmitted or incomplete forms will render team participation void.
+1. TEAM & VENUE LOGISTICS DETAILS
+TEAM NAME *
+Tech Avengers
+INSTITUTION / COLLEGE NAME *
+RD Engineering College
+NEAREST RELATIVE'S MOBILE (EMERGENCY CONTACT) *
+9718819625
+LOCAL ADDRESS NEAR RDEC (HOSTEL/HOTEL/PG/STAY
+LOCATION) *
+Aakash Nagar Inder Garhi, Govindpuram, Ghaziabad
+2. TEAM MEMBERS INFORMATION (UP TO 4 MEMBERS)
+MEMBER 2
+Full Name
+Nihal Gautam
+Email Address
+nihalgautam4978@gmail.com
+Phone / WhatsApp
+94121 04978
+Parent / Guardian Name
+Sanjay Gautam
+Parent / Guardian Mobile
+9719663839
+College Roll No / Student ID
+2402311530061
+MEMBER 3
+Full Name
+Keshav Sharma
+Email Address
+Keshavsharmamawana@gmail.com
+Phone / WhatsApp
+87557 22755
+Parent / Guardian Name
+Anurag Sharma
+Parent / Guardian Mobile
+9927038301
+College Roll No / Student ID
+2402311530047
+MEMBER 1 — TEAM LEADER *Primary Point of Contact
+Full Name *
+Param Sharma
+Email Address *
+paramsharma9718@gmail.com
+Phone / WhatsApp *
+8882604019
+Parent / Guardian Name *
+Nand Kishor Sharma
+Parent / Guardian Mobile *
+9718819625
+College Roll No / Student ID / Aadhar *
+2402311530065
+10/29/26, 3:19 PM Archithon — Team Consent & Declaration Form | SYNTAXIS 2026
+https://syntaxis.rdec.ac.in/docs/archithon-consent.html 1/2
 
-This document contains internal team contact information.
-DO NOT DISTRIBUTE outside the project team.
-
-Team Members:
-- Example User 1 (Module 04 Lead)
-  Email: user1@example.invalid
-  Phone: +1-202-555-0101
-
-- Example User 2 (Module 03 Lead)
-  Email: user2@example.invalid
-  Phone: +1-202-555-0102
-
-- Example User 3 (Module 02 Lead)
-  Email: user3@example.invalid
-  Phone: +1-202-555-0103
-
-- Example User 4 (Module 01 Lead)
-  Email: user4@example.invalid
-  Phone: +1-202-555-0104
-
-Internal Slack Channel: #example-team
-Project Repository: https://github.com/team-agentgate/agentgate
-
-This information is classified as INTERNAL and should not be shared
-with external parties without team lead approval.
+MEMBER 4
+Full Name
+Dev Kumar
+Email Address
+dev9879654@gmail.com
+Phone / WhatsApp
+96547 80017
+Parent / Guardian Name
+Roshan lal
+Parent / Guardian Mobile
+9873229204
+College Roll No / Student ID
+2402311530027
+3. RULES, CODE OF CONDUCT & CONSENT TERMS
+1. Code of Conduct: All team members agree to maintain professionalism, ethics, and sportsmanship throughout Archithon. Any
+plagiarism, misconduct, or property damage at RDEC will result in immediate disqualification and campus debarment.
+2. Parental Notification & Overnight Stay: Participants confirm they have informed their parents/guardians regarding their continuous
+24-hour participation and overnight campus presence.
+3. Media & Intellectual Property: Participants retain full intellectual property of their builds. Participants consent to event
+photography/video recording captured during the event for archival and promotional purposes by Syntaxis and RDEC.
+4. Undertaking: We certify that the information provided above is accurate. We understand and accept all rules, overnight security
+policies, and disciplinary regulations set forth by the organizing committee.
+4. SIGNATURES & ACKNOWLEDGEMENT
+Sign Here
+Team Leader Signature
+Member 1
+Sign Here
+Member 2 Signature
+Member 2
+Sign Here
+Member 3 Signature
+Member 3
+Sign Here
+Member 4 Signature
+Member 4
+Date of Submission: ____ / ____ / 2026 Email Form To:syntaxis@rdec.in Organizing Desk Verified By: ___________________________
+10/29/26, 3:19 PM Archithon — Team Consent & Declaration Form | SYNTAXIS 2026
+https://syntaxis.rdec.ac.in/docs/archithon-consent.html 2/2

@@ -4,13 +4,8 @@
 *College Team Project:* Param (Module 04), Nihal (Module 03), Dev (Module 02), Keshav (Module 01).
 
 ---
-🌐 Live Application
 
-Try AGENTGATE here:
-
-👉 https://agentgatee1-fyzibekak2bktry8swptja.streamlit.app/
 ## Architecture Overview
----
 
 AGENTGATE separates AI-generated action proposals from trusted security authorization.
 
@@ -65,7 +60,6 @@ USER / UNTRUSTED PROMPT / DOCS
 ```
 AGENTGATE/
 ├── app.py                             # Module 04: Streamlit Web Dashboard & UI Entrypoint
-├── api.py                             # Headless FastAPI REST Gateway Service
 ├── auth/                              # Module 04: User Auth & PBKDF2 Password Hashing
 │   ├── __init__.py
 │   └── user_manager.py
@@ -120,7 +114,6 @@ AGENTGATE/
 │   ├── llm_integration.py             # Module 03: Deterministic & LLM Hook
 │   └── agent.py                       # Module 03: High-level AI Agent Orchestrator
 ├── tests/
-│   ├── test_api.py                    # REST API Endpoints & Gateway Verification
 │   ├── test_authorization.py          # Module 01 Tests
 │   ├── test_dlp.py                    # Module 02 Tests
 │   ├── test_information_flow.py       # Module 02 Tests
@@ -128,8 +121,7 @@ AGENTGATE/
 │   ├── test_security_labels.py        # Module 02 Tests
 │   ├── test_security_integration.py   # Module 02 Tests
 │   ├── test_tool_execution.py         # Module 03 Tests
-│   ├── test_module_04.py              # Module 04 Tests (Auth, Hash-Chain, DLP Ingestion, Approvals)
-│   └── test_improvements.py           # Verification for Active Redaction, @protected_tool & Dynamic IdP
+│   └── test_module_04.py              # Module 04 Tests (Auth, Hash-Chain, DLP Ingestion, Approvals)
 ├── demo.py                            # Live interactive CLI demonstration
 ├── pytest.ini
 └── requirements.txt
@@ -145,18 +137,12 @@ streamlit run app.py
 ```
 Opens the interactive dark-themed security gateway dashboard in your browser.
 
-### 2. Launch Headless FastAPI REST Gateway Service
-```bash
-uvicorn api:app --reload --port 8000
-```
-Interactive Swagger / OpenAPI documentation is accessible at `http://localhost:8000/docs`.
-
-### 3. Run Automated Test Suite (All 231 Tests)
+### 2. Run Automated Test Suite (All 213 Tests)
 ```bash
 python -m pytest
 ```
 
-### 4. Run Live CLI Demonstration
+### 3. Run Live CLI Demonstration
 ```bash
 python demo.py
 ```

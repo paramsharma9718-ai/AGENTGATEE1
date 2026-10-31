@@ -1,63 +1,30 @@
 {
   "roles": {
     "ADMINISTRATOR": {
-      "allowed_operations": [
-        "READ_DOCUMENT",
-        "SAVE_REPORT",
-        "SEND_REPORT",
-        "ACCESS_RESOURCE",
-        "MODIFY_CLASSIFICATION"
-      ]
+      "allowed_operations": ["READ_DOCUMENT", "SAVE_REPORT", "SEND_REPORT", "ACCESS_RESOURCE", "MODIFY_CLASSIFICATION"]
     },
     "AUTHORIZED_USER": {
-      "allowed_operations": [
-        "READ_DOCUMENT",
-        "SAVE_REPORT",
-        "SEND_REPORT",
-        "ACCESS_RESOURCE"
-      ]
+      "allowed_operations": ["READ_DOCUMENT", "SAVE_REPORT", "SEND_REPORT", "ACCESS_RESOURCE"]
     },
     "RESTRICTED_USER": {
-      "allowed_operations": [
-        "READ_DOCUMENT",
-        "ACCESS_RESOURCE"
-      ]
+      "allowed_operations": ["READ_DOCUMENT", "ACCESS_RESOURCE"]
     }
   },
   "resource_classifications": {
     "public": {
-      "allowed_roles": [
-        "ADMINISTRATOR",
-        "AUTHORIZED_USER",
-        "RESTRICTED_USER"
-      ]
+      "allowed_roles": ["ADMINISTRATOR", "AUTHORIZED_USER", "RESTRICTED_USER"]
     },
     "internal": {
-      "allowed_roles": [
-        "ADMINISTRATOR",
-        "AUTHORIZED_USER"
-      ]
+      "allowed_roles": ["ADMINISTRATOR", "AUTHORIZED_USER"]
     },
     "confidential": {
-      "allowed_roles": [
-        "ADMINISTRATOR"
-      ]
-    },
-    "restricted": {
-      "allowed_roles": [
-        "ADMINISTRATOR"
-      ]
+      "allowed_roles": ["ADMINISTRATOR"]
     }
   },
   "recipient_authorizations": {
-    "authorized_recipients": [
-      "USER-101",
-      "USER-102"
-    ]
+    "authorized_recipients": ["USER-101", "USER-102"]
   },
   "approval_required": {
-    "SEND_REPORT": [
-      "confidential"
-    ]
+    "SEND_REPORT": ["confidential"]
   }
 }

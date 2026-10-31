@@ -21,7 +21,7 @@ from models.document_security import (
     TransformationType,
 )
 from models.workflow import ActionProposal, ExecutionResult
-from security.dlp_engine import inspect_content, redact_text
+from security.dlp_engine import inspect_content
 from security.provenance import register_derivation
 from storage.audit_logger import AuditLogger, default_audit_logger
 from storage.document_registry import DocumentRegistry, default_document_registry
@@ -57,13 +57,8 @@ class ReportSaver:
         content: str,
         source_doc_ids: List[str],
         transformation_type: TransformationType = TransformationType.SUMMARIZATION,
-        auto_redact: bool = False,
     ) -> ExecutionResult:
-        """Derive security classification and save report via the security gateway.
-
-        If auto_redact=True, any sensitive PII / secret patterns detected by the DLP engine
-        will be sanitized with [REDACTED:<category>] tokens before saving.
-        """
+        """Derive security classification and save report via the security gateway."""
         # 1. Retrieve source metadata for strict provenance and inheritance
         sources_meta: List[DocumentSecurityMetadata] = []
         for s_id in source_doc_ids:
@@ -99,12 +94,6 @@ class ReportSaver:
 
         # 3. Perform DLP Content Inspection (defense-in-depth)
         dlp_result = inspect_content(content)
-        sanitized_content = (
-            redact_text(content, dlp_result)
-            if (auto_redact and dlp_result.sensitive_content_detected and dlp_result.findings)
-            else content
-        )
-        is_sanitized = auto_redact and dlp_result.sensitive_content_detected and bool(dlp_result.findings)
 
         # 4. Create ActionProposal with verified classification
         proposal = ActionProposal(
@@ -117,7 +106,6 @@ class ReportSaver:
                 "verified_classification": derived_artifact.security.classification,
                 "source_doc_ids": source_doc_ids,
                 "dlp_status": dlp_result.status.value,
-                "is_sanitized": is_sanitized,
             },
         )
 
@@ -127,14 +115,12 @@ class ReportSaver:
             report_data = {
                 "report_id": report_id,
                 "title": title,
-                "content": sanitized_content,
+                "content": content,
                 "classification": derived_artifact.security.classification.value,
                 "created_by": user_id,
                 "sources": source_doc_ids,
                 "provenance": derived_artifact.provenance.model_dump(mode="json"),
                 "security_metadata": derived_artifact.security.model_dump(mode="json"),
-                "is_sanitized": is_sanitized,
-                "dlp_findings_count": len(dlp_result.findings) if dlp_result.sensitive_content_detected else 0,
             }
 
             with open(report_file, "w", encoding="utf-8") as f:
@@ -154,9 +140,6 @@ class ReportSaver:
                 "report_id": report_id,
                 "file_path": str(report_file),
                 "classification": derived_artifact.security.classification.value,
-                "content": sanitized_content,
-                "is_sanitized": is_sanitized,
-                "dlp_findings_count": len(dlp_result.findings) if dlp_result.sensitive_content_detected else 0,
                 "status": "SAVED",
             }
 

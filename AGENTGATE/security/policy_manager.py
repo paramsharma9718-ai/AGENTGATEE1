@@ -46,23 +46,20 @@ _policy = PolicyConfig.model_validate(_raw_policy)
 def get_user_role(user_id: str) -> Optional[str]:
     """Return the trusted role for a given user identifier.
 
-    Checks the dynamic UserManager (SQLite) first so newly registered or updated
-    users are immediately recognized, then falls back to the static trusted registry.
-    If the user is unknown in both, None is returned which leads to a BLOCK decision.
+    The function never trusts a role supplied by an external request. If the user
+    is unknown, a ``None`` value is returned which leads to a BLOCK decision.
     """
+    role = _TRUSTED_USERS.get(user_id)
+    if role:
+        return role
     try:
         from auth.user_manager import default_user_manager
         user = default_user_manager.get_user_by_id(user_id)
-        if user and user.get("role"):
+        if user:
             return user["role"]
     except Exception:
         pass
-
-    return _TRUSTED_USERS.get(user_id)
-
-def register_trusted_user(user_id: str, role: str) -> None:
-    """Dynamically register or update an in-memory trusted user mapping."""
-    _TRUSTED_USERS[user_id] = role
+    return None
 
 def get_allowed_operations_for_role(role: str) -> Set[str]:
     """Return the set of operation names allowed for the given role.
@@ -84,20 +81,8 @@ def get_allowed_roles_for_classification(classification: str) -> Set[str]:
 
 def is_recipient_authorized(recipient_id: str) -> bool:
     """Check whether a recipient identifier is listed as authorized.
-
-    Checks the policy config's authorized_recipients list first, then queries
-    the dynamic UserManager for users with authorized roles.
     """
-    if recipient_id in _policy.recipient_authorizations.authorized_recipients:
-        return True
-    try:
-        from auth.user_manager import default_user_manager
-        user = default_user_manager.get_user_by_id(recipient_id)
-        if user and user.get("role") in ("ADMINISTRATOR", "AUTHORIZED_USER"):
-            return True
-    except Exception:
-        pass
-    return False
+    return recipient_id in _policy.recipient_authorizations.authorized_recipients
 
 def get_approval_required_operations() -> Dict[str, List[str]]:
     """Return a mapping of operation -> list of classifications that need approval.

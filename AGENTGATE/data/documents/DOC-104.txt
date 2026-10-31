@@ -1,24 +1,24 @@
-AGENTGATE Project — Team Meeting Notes
-=======================================
+SYNTAXIS 2026
+ARCHITHON
+PARAM SHARMA
+BOOKING ID
+C791771D
+BOOKING DATE
+OCT 27, 2026
+DATE & TIME
+OCT 30, 2026 (12 AM TO 10 AM IST)
+OCT 31, 2026 (10 AM TO 12:59 PM IST)
+LOCATION
+R.D.ENGINEERING COLLEGE, DELHI - MEERUT EXPY, DUHAI, GHAZIABAD, UTTAR PRADESH,
+INDIA
+VENUE DETAILS
+Dates: Oct 30 - Oct 31, 2026
+Venue: RDEC Campus
+Team Size: 3 - 4 Members
 
-Date: October 30, 2026
-Attendees: Param, Nihal, Dev, Keshav
-
-Agenda:
-1. Module integration status update
-2. Dashboard UI polish (dark theme finalized)
-3. Test suite coverage — currently at 231 passing tests
-4. Demo preparation for upcoming hackathon presentation
-
-Action Items:
-- Param: Finalize Streamlit dashboard and SQLite schema
-- Nihal: Complete execution gateway fail-closed enforcement
-- Dev: Add remaining DLP rules for financial patterns
-- Keshav: Write policy engine unit tests
-
-Notes:
-The project architecture separates AI-generated action proposals from 
-trusted security authorization. This ensures no AI agent can self-authorize 
-any privileged operation. All actions go through the independent gateway.
-
-Next meeting scheduled for November 2, 2026.
+Timeline & Submissions
+ • Themes Released: Oct 15, 2026
+• Problem Statements: Oct 30, 09:00 AM (1 hr before start)
+• Dev Window: Oct 30, 10:00 AM - Oct 31, 11:00 AM
+• Submissions: Oct 31, 11:00 AM (GitHub Repo + Slides via Form)
+• Judging (The Tribunal): Oct 31, 11:30 AM - 04:00 PM

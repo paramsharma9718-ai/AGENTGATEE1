@@ -25,7 +25,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from models.action_request import Operation
 from models.document_security import Classification, DocumentSecurityMetadata, LabelOrigin
 from models.workflow import ActionProposal, ExecutionStatus
-from security.dlp_engine import inspect_content, redact_text
+from security.dlp_engine import inspect_content
 from storage.document_registry import DocumentRegistry, default_document_registry
 from tools.execution_gateway import ExecutionGateway, default_execution_gateway
 
@@ -277,21 +277,12 @@ class DocumentService:
                 )
                 conn.commit()
 
-        redacted_text = ""
-        if dlp_findings:
-            try:
-                dlp_res = inspect_content(text_content)
-                redacted_text = redact_text(text_content, dlp_res)
-            except Exception:
-                pass
-
         result_dict = {
             "document_id": doc_id,
             "filename": safe_name,
             "classification": final_class.value,
             "suggested_classification": suggested_class.value,
             "dlp_findings": dlp_findings,
-            "redacted_content": redacted_text,
             "uploaded_by": uploaded_by,
             "upload_date": now_str,
         }

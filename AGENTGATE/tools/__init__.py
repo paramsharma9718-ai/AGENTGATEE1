@@ -2,7 +2,6 @@ from tools.execution_gateway import ExecutionGateway, default_execution_gateway
 from tools.document_reader import DocumentReader, default_document_reader
 from tools.report_saver import ReportSaver, default_report_saver
 from tools.mock_inbox import MockInbox, default_mock_inbox
-from tools.registry import ProtectedToolRegistry, default_tool_registry, protected_tool
 
 __all__ = [
     "ExecutionGateway",
@@ -13,7 +12,4 @@ __all__ = [
     "default_report_saver",
     "MockInbox",
     "default_mock_inbox",
-    "ProtectedToolRegistry",
-    "default_tool_registry",
-    "protected_tool",
 ]
